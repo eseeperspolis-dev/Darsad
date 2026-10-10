@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ماشین حساب درصد</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="درصد">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--text:#1c1f26;--muted:#6b7280;--accent:#2563eb;--accent-text:#fff;--border:#d9dde3;--res:#eef4ff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12141a;--card:#1b1e26;--text:#eceef2;--muted:#9aa1ad;--accent:#4c8dff;--accent-text:#0b1220;--border:#2c313c;--res:#1d2a44}}
+:root[data-theme="dark"]{--bg:#12141a;--card:#1b1e26;--text:#eceef2;--muted:#9aa1ad;--accent:#4c8dff;--accent-text:#0b1220;--border:#2c313c;--res:#1d2a44}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;min-height:100vh;display:flex;justify-content:center;padding:16px}
+.wrap{width:100%;max-width:420px}
+h1{font-size:20px;margin:8px 0 16px;text-align:center}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tabs button{flex:1;padding:10px 4px;border:1px solid var(--border);background:var(--card);color:var(--muted);border-radius:10px;font:inherit;font-size:13px;cursor:pointer}
+.tabs button.on{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 6px}
+label:first-child{margin-top:0}
+input{width:100%;padding:12px;font:inherit;font-size:18px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:10px;direction:ltr;text-align:right}
+input:focus{outline:2px solid var(--accent);border-color:transparent}
+.res{margin-top:16px;padding:14px;border-radius:12px;background:var(--res);text-align:center}
+.res small{display:block;color:var(--muted);font-size:13px;margin-bottom:4px}
+.res b{font-size:28px;direction:ltr;unicode-bidi:plaintext;word-break:break-all}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>ماشین حساب درصد</h1>
+<div class="tabs" id="tabs"></div>
+<div class="card">
+<label id="l1"></label><input id="a" inputmode="decimal" autocomplete="off">
+<label id="l2"></label><input id="b" inputmode="decimal" autocomplete="off">
+<div class="res"><small id="rl">نتیجه</small><b id="out">—</b></div>
+</div>
+</div>
+<script>
+const modes=[
+{n:"درصد از مقدار",l1:"درصد (%)",l2:"مقدار",rl:"نتیجه",f:(p,v)=>p*v/100},
+{n:"افزایش درصدی",l1:"درصد (%)",l2:"مقدار",rl:"مقدار پس از افزایش",f:(p,v)=>v*(1+p/100)},
+{n:"کاهش درصدی",l1:"درصد (%)",l2:"مقدار",rl:"مقدار پس از کاهش",f:(p,v)=>v*(1-p/100)}
+];
+let m=0;
+const $=id=>document.getElementById(id);
+const norm=s=>s.replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[٫,]/g,".").replace(/[٬\s]/g,"");
+const fmt=n=>{const r=Math.round(n*1e6)/1e6;return r.toLocaleString("en-US",{maximumFractionDigits:6})};
+function calc(){
+const a=parseFloat(norm($("a").value)),b=parseFloat(norm($("b").value));
+const o=$("out");
+if(isNaN(a)||isNaN(b)){o.textContent="—";return}
+const r=modes[m].f(a,b);
+o.textContent=isFinite(r)?fmt(r)+(modes[m].s||""):"—";
+}
+function setMode(i){
+m=i;const d=modes[i];
+$("l1").textContent=d.l1;$("l2").textContent=d.l2;$("rl").textContent=d.rl;
+[...$("tabs").children].forEach((t,j)=>t.classList.toggle("on",j==i));
+calc();
+}
+modes.forEach((d,i)=>{const t=document.createElement("button");t.textContent=d.n;t.onclick=()=>setMode(i);$("tabs").appendChild(t)});
+$("a").addEventListener("input",calc);$("b").addEventListener("input",calc);
+setMode(0);
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
+</script>
+</body>
+</html>
