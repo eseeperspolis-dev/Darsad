@@ -52,7 +52,7 @@ const modes=[
 ];
 let m=0;
 const $=id=>document.getElementById(id);
-const norm=s=>s.replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[٫,]/g,".").replace(/[٬\s]/g,"");
+const norm=s=>s.replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/٫/g,".").replace(/[٬,،\s]/g,"");
 const fmt=n=>{const r=Math.round(n*1e6)/1e6;return r.toLocaleString("en-US",{maximumFractionDigits:6})};
 function calc(){
 const a=parseFloat(norm($("a").value)),b=parseFloat(norm($("b").value));
@@ -68,7 +68,22 @@ $("l1").textContent=d.l1;$("l2").textContent=d.l2;$("rl").textContent=d.rl;
 calc();
 }
 modes.forEach((d,i)=>{const t=document.createElement("button");t.textContent=d.n;t.onclick=()=>setMode(i);$("tabs").appendChild(t)});
-$("a").addEventListener("input",calc);$("b").addEventListener("input",calc);
+function group(el){
+const pos=el.selectionStart??el.value.length;
+const clean=t=>norm(t).replace(/[^0-9.\-]/g,"");
+const keep=clean(el.value.slice(0,pos)).length;
+let s=clean(el.value);
+const neg=s.startsWith("-");s=s.replace(/-/g,"");
+const i=s.indexOf(".");
+let ip=i<0?s:s.slice(0,i),dp=i<0?null:s.slice(i+1).replace(/\./g,"");
+ip=ip.replace(/\B(?=(\d{3})+(?!\d))/g,",");
+const v=(neg?"-":"")+ip+(dp===null?"":"."+dp);
+el.value=v;
+let c=0,np=0;
+while(np<v.length&&c<keep){if(v[np]!==",")c++;np++}
+try{el.setSelectionRange(np,np)}catch(e){}
+}
+["a","b"].forEach(id=>$(id).addEventListener("input",()=>{group($(id));calc()}));
 setMode(0);
 if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
 </script>
