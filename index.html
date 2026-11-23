@@ -12,18 +12,21 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
 <style>
-:root{--bg:#f5f6f8;--card:#fff;--text:#1c1f26;--muted:#6b7280;--accent:#2563eb;--accent-text:#fff;--border:#d9dde3;--res:#eef4ff;
+:root{--bg:#f5f6f8;--card:#fff;--text:#1c1f26;--muted:#6b7280;--accent:#2563eb;--accent-text:#fff;--border:#d9dde3;--res:#eef4ff;--green:#15803d;--gbg:#e7f6ec;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12141a;--card:#1b1e26;--text:#eceef2;--muted:#9aa1ad;--accent:#4c8dff;--accent-text:#0b1220;--border:#2c313c;--res:#1d2a44}}
-:root[data-theme="dark"]{--bg:#12141a;--card:#1b1e26;--text:#eceef2;--muted:#9aa1ad;--accent:#4c8dff;--accent-text:#0b1220;--border:#2c313c;--res:#1d2a44}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12141a;--card:#1b1e26;--text:#eceef2;--muted:#9aa1ad;--accent:#4c8dff;--accent-text:#0b1220;--border:#2c313c;--res:#1d2a44;--green:#4ade80;--gbg:#12301e}}
+:root[data-theme="dark"]{--bg:#12141a;--card:#1b1e26;--text:#eceef2;--muted:#9aa1ad;--accent:#4c8dff;--accent-text:#0b1220;--border:#2c313c;--res:#1d2a44;--green:#4ade80;--gbg:#12301e}
 *{box-sizing:border-box}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--text);font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;min-height:100vh;display:flex;justify-content:center;padding:16px}
 .wrap{width:100%;max-width:420px}
 h1{font-size:20px;margin:8px 0 16px;text-align:center}
-.tabs{display:flex;gap:6px;margin-bottom:12px}
-.tabs button{flex:1;padding:10px 4px;border:1px solid var(--border);background:var(--card);color:var(--muted);border-radius:10px;font:inherit;font-size:13px;cursor:pointer}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.tabs button{flex:1 1 40%;padding:10px 4px;border:1px solid var(--border);background:var(--card);color:var(--muted);border-radius:10px;font:inherit;font-size:13px;cursor:pointer}
 .tabs button.on{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.tabs.sub{margin-bottom:6px}
+.tabs.sub button{flex:1 1 28%;font-size:12px;padding:8px 2px;border-radius:8px;background:var(--bg)}
+.tabs.sub button.on{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
 label{display:block;font-size:13px;color:var(--muted);margin:10px 0 6px}
 label:first-child{margin-top:0}
@@ -32,6 +35,10 @@ input:focus{outline:2px solid var(--accent);border-color:transparent}
 .res{margin-top:16px;padding:14px;border-radius:12px;background:var(--res);text-align:center}
 .res small{display:block;color:var(--muted);font-size:13px;margin-bottom:4px}
 .res b{font-size:28px;direction:ltr;unicode-bidi:plaintext;word-break:break-all}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:stretch}
+.val{background:var(--gbg);border-radius:10px;padding:6px 8px;text-align:center;display:flex;flex-direction:column;justify-content:center}
+.val small{font-size:12px;color:var(--muted)}
+.val b{display:block;font-size:22px;color:var(--green);direction:ltr;word-break:break-all}
 </style>
 </head>
 <body>
@@ -39,35 +46,62 @@ input:focus{outline:2px solid var(--accent);border-color:transparent}
 <h1>ماشین حساب درصد</h1>
 <div class="tabs" id="tabs"></div>
 <div class="card">
+
+<div id="std">
+<div class="tabs sub" id="subtabs"></div>
 <label id="l1"></label><input id="a" inputmode="decimal" autocomplete="off">
 <label id="l2"></label><input id="b" inputmode="decimal" autocomplete="off">
 <div class="res"><small id="rl">نتیجه</small><b id="out">—</b></div>
 </div>
+
+<div id="tol" style="display:none">
+<label>تلرانس مثبت (%)</label>
+<div class="row"><input id="p" inputmode="decimal" autocomplete="off"><div class="val"><small>حداکثر مجاز</small><b id="vmax">—</b></div></div>
+<label>ضخامت نامی (mm)</label>
+<input id="t" inputmode="decimal" autocomplete="off">
+<label>تلرانس منفی (%)</label>
+<div class="row"><input id="n" inputmode="decimal" autocomplete="off"><div class="val"><small>حداقل مجاز</small><b id="vmin">—</b></div></div>
+</div>
+
+</div>
 </div>
 <script>
+const $=id=>document.getElementById(id);
+const norm=s=>s.replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/٫/g,".").replace(/[٬,،%٪\s]/g,"");
+const num=id=>{const n=parseFloat(norm($(id).value));return isNaN(n)?null:n};
+const fmt=n=>{const r=Math.round(n*1e6)/1e6;return r.toLocaleString("en-US",{maximumFractionDigits:6})};
 const modes=[
 {n:"درصد از مقدار",l1:"درصد (%)",l2:"مقدار",rl:"نتیجه",f:(p,v)=>p*v/100},
 {n:"افزایش درصدی",l1:"درصد (%)",l2:"مقدار",rl:"مقدار پس از افزایش",f:(p,v)=>v*(1+p/100)},
 {n:"کاهش درصدی",l1:"درصد (%)",l2:"مقدار",rl:"مقدار پس از کاهش",f:(p,v)=>v*(1-p/100)}
 ];
+const TOL=modes.length;
 let m=0;
-const $=id=>document.getElementById(id);
-const norm=s=>s.replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/٫/g,".").replace(/[٬,،%٪\s]/g,"");
-const fmt=n=>{const r=Math.round(n*1e6)/1e6;return r.toLocaleString("en-US",{maximumFractionDigits:6})};
 function calc(){
-const a=parseFloat(norm($("a").value)),b=parseFloat(norm($("b").value));
-const o=$("out");
-if(isNaN(a)||isNaN(b)){o.textContent="—";return}
+if(m===TOL){
+const p=num("p"),t=num("t"),n=num("n");
+$("vmax").textContent=(p!=null&&t!=null&&p>=0)?fmt(t*(1+p/100)):"—";
+$("vmin").textContent=(n!=null&&t!=null&&n>=0&&n<=100)?fmt(t*(1-n/100)):"—";
+return}
+const a=num("a"),b=num("b"),o=$("out");
+if(a==null||b==null){o.textContent="—";return}
 const r=modes[m].f(a,b);
-o.textContent=isFinite(r)?fmt(r)+(modes[m].s||""):"—";
+o.textContent=isFinite(r)?fmt(r):"—";
 }
+let lastStd=0;
 function setMode(i){
-m=i;const d=modes[i];
-$("l1").textContent=d.l1;$("l2").textContent=d.l2;$("rl").textContent=d.rl;
-[...$("tabs").children].forEach((t,j)=>t.classList.toggle("on",j==i));
+m=i;
+if(i<TOL)lastStd=i;
+$("std").style.display=i<TOL?"block":"none";
+$("tol").style.display=i===TOL?"block":"none";
+if(i<TOL){const d=modes[i];$("l1").textContent=d.l1;$("l2").textContent=d.l2;$("rl").textContent=d.rl}
+[...$("tabs").children].forEach((t,j)=>t.classList.toggle("on",j===(i<TOL?0:1)));
+[...$("subtabs").children].forEach((t,j)=>t.classList.toggle("on",j===i));
 calc();
 }
-modes.forEach((d,i)=>{const t=document.createElement("button");t.textContent=d.n;t.onclick=()=>setMode(i);$("tabs").appendChild(t)});
+["محاسبات درصد","تلرانس مثبت و منفی"].forEach((name,j)=>{const t=document.createElement("button");t.textContent=name;t.onclick=()=>setMode(j===0?lastStd:TOL);$("tabs").appendChild(t)});
+modes.forEach((d,i)=>{const t=document.createElement("button");t.textContent=d.n;t.onclick=()=>setMode(i);$("subtabs").appendChild(t)});
+const PCT=["a","p","n"];
 function group(el){
 const pos=el.selectionStart??el.value.length;
 const clean=t=>norm(t).replace(/[^0-9.\-]/g,"");
@@ -78,14 +112,14 @@ const i=s.indexOf(".");
 let ip=i<0?s:s.slice(0,i),dp=i<0?null:s.slice(i+1).replace(/\./g,"");
 ip=ip.replace(/\B(?=(\d{3})+(?!\d))/g,",");
 let v=(neg?"-":"")+ip+(dp===null?"":"."+dp);
-if(el.id==="a"&&/\d/.test(v))v+="%";
+if(PCT.includes(el.id)&&/\d/.test(v))v+="%";
 el.value=v;
 let c=0,np=0;
 while(np<v.length&&c<keep){if(v[np]!==",")c++;np++}
 try{el.setSelectionRange(np,np)}catch(e){}
 }
-["a","b"].forEach(id=>$(id).addEventListener("input",()=>{group($(id));calc()}));
-$("a").value="7%";
+["a","b","p","t","n"].forEach(id=>$(id).addEventListener("input",()=>{group($(id));calc()}));
+$("a").value="7%";$("p").value="5%";$("n").value="7%";
 setMode(0);
 if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
 </script>
