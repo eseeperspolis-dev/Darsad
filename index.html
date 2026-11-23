@@ -35,7 +35,10 @@ input:focus{outline:2px solid var(--accent);border-color:transparent}
 .res{margin-top:16px;padding:14px;border-radius:12px;background:var(--res);text-align:center}
 .res small{display:block;color:var(--muted);font-size:13px;margin-bottom:4px}
 .res b{font-size:28px;direction:ltr;unicode-bidi:plaintext;word-break:break-all}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:stretch}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:stretch}
+.val.amt{background:var(--res)}
+.val.amt b{color:var(--text)}
+@media (max-width:360px){.row{grid-template-columns:1fr 1fr}.row input{grid-column:1/-1}}
 .val{background:var(--gbg);border-radius:10px;padding:6px 8px;text-align:center;display:flex;flex-direction:column;justify-content:center}
 .val small{font-size:12px;color:var(--muted)}
 .val b{display:block;font-size:22px;color:var(--green);direction:ltr;word-break:break-all}
@@ -56,11 +59,11 @@ input:focus{outline:2px solid var(--accent);border-color:transparent}
 
 <div id="tol" style="display:none">
 <label>تلرانس مثبت (%)</label>
-<div class="row"><input id="p" inputmode="decimal" autocomplete="off"><div class="val"><small>حداکثر مجاز</small><b id="vmax">—</b></div></div>
+<div class="row"><input id="p" inputmode="decimal" autocomplete="off"><div class="val amt"><small>مقدار تلرانس</small><b id="pamt">—</b></div><div class="val"><small>حداکثر مجاز</small><b id="vmax">—</b></div></div>
 <label>ضخامت نامی (mm)</label>
 <input id="t" inputmode="decimal" autocomplete="off">
 <label>تلرانس منفی (%)</label>
-<div class="row"><input id="n" inputmode="decimal" autocomplete="off"><div class="val"><small>حداقل مجاز</small><b id="vmin">—</b></div></div>
+<div class="row"><input id="n" inputmode="decimal" autocomplete="off"><div class="val amt"><small>مقدار تلرانس</small><b id="namt">—</b></div><div class="val"><small>حداقل مجاز</small><b id="vmin">—</b></div></div>
 </div>
 
 </div>
@@ -82,6 +85,8 @@ if(m===TOL){
 const p=num("p"),t=num("t"),n=num("n");
 $("vmax").textContent=(p!=null&&t!=null&&p>=0)?fmt(t*(1+p/100)):"—";
 $("vmin").textContent=(n!=null&&t!=null&&n>=0&&n<=100)?fmt(t*(1-n/100)):"—";
+$("pamt").textContent=(p!=null&&t!=null&&p>=0)?"+"+fmt(t*p/100):"—";
+$("namt").textContent=(n!=null&&t!=null&&n>=0&&n<=100)?"\u2212"+fmt(t*n/100):"—";
 return}
 const a=num("a"),b=num("b"),o=$("out");
 if(a==null||b==null){o.textContent="—";return}
